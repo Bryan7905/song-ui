@@ -1,19 +1,16 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Routes, Route, Navigate } from "react-router-dom";
+import AppShell from "./layout/AppShell.jsx";
+import HomePage from "./pages/Home.jsx";
+import WatchPage from "./pages/WatchPage.jsx";
 
-function App() {
+export default function App() {
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      <div className="flex">
-        <Sidebar />
-        <VideoGrid />
-      </div>
-    </div>
+    <Routes>
+      <Route element={<AppShell />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/watch/:id" element={<WatchPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
   );
 }
-
-export default App

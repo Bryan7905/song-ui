@@ -1,4 +1,4 @@
-const baseUrl = import.meta.env.VITE_SONG_API_BASE_URL;
+const baseUrl = import.meta.env.VITE_SONG_API_BASE_URL || "https://song-api-6ryl.onrender.com";
 
 async function request(path, init) {
   const res = await fetch(`${baseUrl}${path}`, {
@@ -11,7 +11,6 @@ async function request(path, init) {
     throw new Error(`API ${res.status} ${res.statusText}: ${text}`);
   }
 
-  // If your backend returns plain text sometimes, this is safer:
   const contentType = res.headers.get("content-type") || "";
   if (contentType.includes("application/json")) return await res.json();
   return await res.text();
@@ -24,21 +23,15 @@ export function listSongs() {
 }
 
 export function getSong(id) {
-  return request(`${SONS_BASE}/${id}`);
+  return request(`${SONGS_BASE}/${id}`);
 }
 
 export function createSong(song) {
-  return request(`${SONGS_BASE}`, {
-    method: "POST",
-    body: JSON.stringify(song),
-  });
+  return request(`${SONGS_BASE}`, { method: "POST", body: JSON.stringify(song) });
 }
 
 export function updateSong(id, song) {
-  return request(`${SONGS_BASE}/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(song),
-  });
+  return request(`${SONGS_BASE}/${id}`, { method: "PUT", body: JSON.stringify(song) });
 }
 
 export function deleteSong(id) {

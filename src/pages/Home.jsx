@@ -1,42 +1,73 @@
 import { useEffect, useState } from "react";
-import { listSongs } from "../lib/songApi";
-import { Card, CardContent, Typography, CardMedia, Grid } from "@mui/material";
+import { useSearchParams } from "react-router-dom";
+import { Grid, Alert, CircularProgress, Typography, Box } from "@mui/material";
+import SongCard from "../ui/SongCard.jsx";
+import { listSongs, searchSongs } from "../lib/songApi.js";
 
-export default function Home() {
+export default function HomePage() {
+  const [params] = useSearchParams();
+  const q = (params.get("q") || "").trim();
+
   const [songs, setSongs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    listSongs()
-      .then(setSongs)
-      .catch((e) => setError(e.message || String(e)));
-  }, []);
+    let cancelled = false;
+    const run = async () => {
+      setLoading(true);
+      try {
+        const data = q ? await searchSongs(q) : await listSongs();
+        if (!cancelled) setSongs(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!cancelled) setError(e.message || String(e));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [q]);
 
-  if (error) return <div className="p-4 text-red-600">{error}</div>;
+  if (loading) return (
+    <div className="flex h-[50vh] w-full items-center justify-center">
+      <CircularProgress />
+    </div>
+  );
 
   return (
-    <div className="p-4">
-      <Grid container spacing={2}>
-        {songs.map((s) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={s.id}>
-            <Card className="cursor-pointer">
-              {s.thumbnailUrl ? (
-                <CardMedia component="img" height="140" image={s.thumbnailUrl} />
-              ) : (
-                <div className="h-[140px] bg-gray-200" />
-              )}
-              <CardContent>
-                <Typography variant="subtitle1" noWrap>
-                  {s.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" noWrap>
-                  {s.artist ?? "Unknown artist"}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </div>
+    <main className="flex-1 bg-transparent min-h-screen">
+      {/* Header */}
+      <Box className="flex items-center justify-between mb-6 gap-4">
+        <Typography variant="h5" className="!font-bold !text-gray-800">
+          {q ? `Search results for "${q}"` : "Recommended"}
+        </Typography>
+        {/* small hint / count */}
+        <Typography variant="body2" color="textSecondary" className="hidden sm:block">
+          {songs.length} results
+        </Typography>
+      </Box>
+
+      {error && <Alert severity="error" className="mb-4">{error}</Alert>}
+
+      {/* Grid: use Tailwind utilities for spacing and responsive layout */}
+      <div className="w-full">
+        <Grid container spacing={3}>
+          {songs.map((song) => (
+            <Grid item key={song.id} xs={12} sm={6} md={4} lg={3}>
+              <div className="transform hover:-translate-y-1 transition duration-200">
+                <SongCard song={song} />
+              </div>
+            </Grid>
+          ))}
+        </Grid>
+      </div>
+
+      {songs.length === 0 && !loading && (
+        <div className="text-center py-20 text-gray-500">
+          No songs found. Try a different search!
+        </div>
+      )}
+    </main>
   );
 }
